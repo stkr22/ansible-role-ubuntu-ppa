@@ -1,0 +1,16 @@
+---
+- name: "Start service {{ apt_package.service_to_be_started }}."
+  become: yes
+  ansible.builtin.service:
+    name: "{{ apt_package.service_to_be_started }}"
+    state: started
+  when: "'service_to_be_started' in apt_package"
+
+- name: "Add service {{ apt_package.apt_package_name }} to autostart."
+  become: yes
+  ansible.builtin.file:
+    src: "{{ apt_package.service_to_autostart_path }}"
+    dest: "/home/{{ ansible_facts['user_id'] }}/.config/autostart/{{ apt_package.apt_package_name }}.desktop"
+    mode: 0644
+    state: link
+  when: "'service_to_autostart_path' in apt_package"

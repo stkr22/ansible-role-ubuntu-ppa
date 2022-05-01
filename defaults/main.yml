@@ -1,0 +1,13 @@
+---
+# defaults file for ppa_install
+local_gpg_keyrings_path: /usr/local/share/keyrings
+apt_package:
+  apt_package_name: null
+  apt_key_url: null
+  apt_key_server_key: null
+  apt_repository_url: null
+  apt_repository_postfix: main
+  apt_repository_distribution: null
+  apt_install_list: null
+  service_to_autostart_path: null
+  service_to_be_started: null

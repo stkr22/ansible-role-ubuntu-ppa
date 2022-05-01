@@ -1,0 +1,40 @@
+---
+- name: Verify that required string variables are defined
+  ansible.builtin.assert:
+    that:
+      - "{{ req_var }} is defined"
+      - "{{ req_var }} | length > 0"
+      - "{{ req_var }} != None"
+    fail_msg: "{{ req_var }} needs to be set for the role to work"
+    success_msg: "Required variable {{ req_var }} is defined"
+  loop:
+    - apt_package.apt_package_name
+    - apt_package.apt_repository_url
+    - apt_package.apt_install_list
+  loop_control:
+    loop_var: req_var
+
+- name: Setting key names and helper variables
+  ansible.builtin.set_fact:
+    local_raw_key_path: "/tmp/{{ apt_package.apt_package_name }}_raw.gpg"
+    local_processed_key_path: "{{ local_gpg_keyrings_path }}/{{ apt_package.apt_package_name }}.gpg"
+    apt_repository_architecture_key: "{{ 'amd64' if (ansible_facts['architecture'] == 'x86_64') else 'arm64' }}"
+    apt_repository_distribution: "{{ apt_package.apt_repository_distribution if 'apt_repository_distribution' in apt_package else ansible_facts['lsb'].codename }}"
+    apt_repository_postfix: "{{ apt_package.apt_repository_postfix if 'apt_repository_postfix' in apt_package else 'main' }}"
+    apt_key_temp_path_template: "/tmp/temp-keyring_{{ apt_package.apt_package_name }}_{{ range(1000, 37272) | random }}"
+
+- name: Setting repo reference
+  ansible.builtin.set_fact:
+    apt_repository_reference: "{{ apt_package.apt_repository_url }} {{ apt_repository_distribution }} {{ apt_repository_postfix }}"
+
+- name: Create key directory if not exists.
+  become: yes
+  file:
+    path: "{{ local_gpg_keyrings_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Checking if key already exists.
+  stat:
+    path: "{{ local_processed_key_path }}"
+  register: local_processed_key_check

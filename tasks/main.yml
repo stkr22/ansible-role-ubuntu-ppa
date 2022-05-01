@@ -1,0 +1,57 @@
+---
+# pre task
+- name: Executing defined pre tasks.
+  ansible.builtin.import_tasks: pre_tasks.yml
+
+# main tasks
+- name: "Get {{ apt_package.apt_package_name }} key from ubuntu key server"
+  ansible.builtin.shell: |
+    gpg --no-default-keyring --keyring {{ apt_key_temp_path_template }}.gpg --keyserver keyserver.ubuntu.com --recv-keys {{ apt_package.apt_key_server_key }}
+    gpg --no-default-keyring --keyring {{ apt_key_temp_path_template }}.gpg --export > {{ apt_key_temp_path_template }}_final.gpg
+    rm {{ apt_key_temp_path_template }}.gpg
+  when:
+    - "'apt_key_server_key' in apt_package"
+    - not local_processed_key_check.stat.exists
+
+- name: "Copy key to final location"
+  become: yes
+  ansible.builtin.copy:
+    src: "{{ apt_key_temp_path_template }}_final.gpg"
+    dest: "{{ local_processed_key_path }}"
+    remote_src: yes
+    mode: 0644
+  when:
+    - "'apt_key_server_key' in apt_package"
+    - not local_processed_key_check.stat.exists
+
+- name: "Get raw {{ apt_package.apt_package_name }} key from url"
+  ansible.builtin.get_url:
+    url: "{{ apt_package.apt_key_url }}"
+    dest: "{{ local_raw_key_path }}"
+    mode: 0644
+  when:
+    - not local_processed_key_check.stat.exists
+    - "'apt_key_server_key' not in apt_package"
+
+- name: "Dearmor {{ apt_package.apt_package_name }} key"
+  become: yes
+  ansible.builtin.shell:
+    cmd: "cat {{ local_raw_key_path }} | gpg --dearmor > {{ local_processed_key_path }}"
+  when:
+    - not local_processed_key_check.stat.exists
+    - "'apt_key_server_key' not in apt_package"
+
+- name: "Add {{ apt_package.apt_package_name }} Repository to apt"
+  become: yes
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ apt_repository_architecture_key }} signed-by={{ local_processed_key_path }}] {{ apt_repository_reference }}"
+    filename: "{{ apt_package.apt_package_name }}"
+
+- name: "Install {{ apt_package.apt_package_name }}"
+  become: yes
+  ansible.builtin.apt:
+    name: "{{ apt_package.apt_install_list }}"
+
+# post task
+- name: Executing defined post tasks.
+  ansible.builtin.import_tasks: post_tasks.yml
