@@ -23,9 +23,18 @@ Example Playbook
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+```yaml
+- hosts: servers
+    tasks:
+    - name: Install PPAs with key signed-by.
+      ansible.builtin.include_role:
+        name: ansible-role-ubuntu-ppa
+      vars:
+        apt_package: "{{ item }}"
+      loop: "{{ ppa_installs }}"
+      when:
+        - ppa_installs | length >= 1
+```
 
 License
 -------
