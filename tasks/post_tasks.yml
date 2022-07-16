@@ -11,13 +11,16 @@
     path: "/home/{{ ansible_facts['user_id'] }}/.config/autostart/"
     state: directory
     mode: 0750
+    group: "{{ ansible_facts['user_id'] }}"
+    owner: "{{ ansible_facts['user_id'] }}"
   when: "'service_to_autostart_path' in apt_package"
 
 - name: "Add service {{ apt_package.apt_package_name }} to autostart."
   become: yes
-  ansible.builtin.file:
+  ansible.builtin.copy:
     src: "{{ apt_package.service_to_autostart_path }}"
     dest: "/home/{{ ansible_facts['user_id'] }}/.config/autostart/{{ apt_package.apt_package_name }}.desktop"
     mode: 0640
-    state: link
+    group: "{{ ansible_facts['user_id'] }}"
+    owner: "{{ ansible_facts['user_id'] }}"
   when: "'service_to_autostart_path' in apt_package"
