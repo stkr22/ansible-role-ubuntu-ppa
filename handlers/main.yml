@@ -1,2 +1,6 @@
 ---
 # handlers file for ppa_install
+- name: Update apt cache
+  become: true
+  ansible.builtin.apt:
+    update_cache: true

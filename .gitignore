@@ -1,0 +1,4 @@
+.ansible
+service-account-keys
+.env
+galaxy-roles

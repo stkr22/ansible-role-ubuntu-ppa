@@ -1,0 +1,7 @@
+X-Repolib-Name: {{ apt_package.apt_package_name }}
+Types: deb
+URIs: {{ apt_package.apt_repository_url }}
+Suites: {{ apt_repository_distribution }}
+Components: {{ apt_repository_postfix }}
+Architectures: {{ apt_repository_architecture_key }}
+Signed-By: {{ local_processed_key_path }}
