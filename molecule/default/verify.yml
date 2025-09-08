@@ -1,0 +1,101 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+
+  tasks:
+    - name: Check that keyrings directory exists
+      ansible.builtin.stat:
+        path: /etc/apt/keyrings
+      register: keyrings_dir
+      failed_when: not keyrings_dir.stat.exists or not keyrings_dir.stat.isdir
+
+    - name: Check that GPG keys were installed
+      ansible.builtin.stat:
+        path: "/etc/apt/keyrings/{{ item }}.gpg"
+      register: key_files
+      failed_when: not key_files.stat.exists
+      loop:
+        - mozilla-firefox
+        - vscode
+        - kubernetes
+
+    - name: Check that .sources files were created
+      ansible.builtin.stat:
+        path: "/etc/apt/sources.list.d/{{ item }}.sources"
+      register: sources_files
+      failed_when: not sources_files.stat.exists
+      loop:
+        - mozilla-firefox
+        - vscode
+        - kubernetes
+
+    - name: Read and validate mozilla-firefox sources file
+      ansible.builtin.slurp:
+        src: /etc/apt/sources.list.d/mozilla-firefox.sources
+      register: firefox_content
+
+    - name: Verify Firefox sources content
+      ansible.builtin.assert:
+        that:
+          - "'X-Repolib-Name: mozilla-firefox' in firefox_content.content | b64decode"
+          - "'Types: deb' in firefox_content.content | b64decode"
+          - "'URIs: https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu' in firefox_content.content | b64decode"
+          - "'Suites: noble' in firefox_content.content | b64decode"
+          - "'Components: main' in firefox_content.content | b64decode"
+          - "'Signed-By: /etc/apt/keyrings/mozilla-firefox.gpg' in firefox_content.content | b64decode"
+        fail_msg: "Firefox sources file content is incorrect"
+
+    - name: Read and validate vscode sources file
+      ansible.builtin.slurp:
+        src: /etc/apt/sources.list.d/vscode.sources
+      register: vscode_content
+
+    - name: Verify VS Code sources content
+      ansible.builtin.assert:
+        that:
+          - "'X-Repolib-Name: vscode' in vscode_content.content | b64decode"
+          - "'Suites: stable' in vscode_content.content | b64decode"
+          - "'Components: main' in vscode_content.content | b64decode"
+        fail_msg: "VS Code sources file content is incorrect"
+
+    - name: Read and validate kubernetes sources file
+      ansible.builtin.slurp:
+        src: /etc/apt/sources.list.d/kubernetes.sources
+      register: k8s_content
+
+    - name: Verify Kubernetes sources content
+      ansible.builtin.assert:
+        that:
+          - "'X-Repolib-Name: kubernetes' in k8s_content.content | b64decode"
+          - "'Components: /' in k8s_content.content | b64decode"
+          - "'URIs: https://pkgs.k8s.io' in k8s_content.content | b64decode"
+        fail_msg: "Kubernetes sources file content is incorrect"
+
+    - name: Verify Firefox is installed
+      ansible.builtin.package:
+        name: firefox
+        state: present
+      check_mode: true
+      register: firefox_check
+      failed_when: firefox_check.changed
+
+    - name: Verify VS Code is installed
+      ansible.builtin.package:
+        name: code
+        state: present
+      check_mode: true
+      register: vscode_check
+      failed_when: vscode_check.changed
+
+    - name: Verify kubectl is installed
+      ansible.builtin.package:
+        name: kubectl
+        state: present
+      check_mode: true
+      register: kubectl_check
+      failed_when: kubectl_check.changed
+
+    - name: Display test results
+      ansible.builtin.debug:
+        msg: "All PPA installations and package verifications passed successfully!"

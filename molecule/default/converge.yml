@@ -1,0 +1,43 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  
+  vars:
+    local_gpg_keyrings_path: /etc/apt/keyrings
+    
+    # Test different PPA configurations
+    test_ppas:
+      # Test standard PPA with all fields and install firefox
+      - apt_package_name: "mozilla-firefox"
+        apt_key_url: "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x738beb9321d1aaec13ea9391aebdf4819be21867"
+        apt_uris: "https://ppa.launchpadcontent.net/mozillateam/ppa/ubuntu"
+        apt_suites: "noble"
+        apt_components: "main"
+        apt_install_list: ["firefox"]
+      
+      # Test Microsoft repo with VS Code installation
+      - apt_package_name: "vscode"
+        apt_key_url: "https://packages.microsoft.com/keys/microsoft.asc"
+        apt_uris: "https://packages.microsoft.com/repos/code"
+        apt_suites: "stable"
+        apt_components: "main"
+        apt_install_list: ["code"]
+      
+      # Test Kubernetes repo without suites field
+      - apt_package_name: "kubernetes"
+        apt_key_url: "https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key"
+        apt_uris: "https://pkgs.k8s.io/core:/stable:/v1.31/deb/"
+        apt_suites: ""
+        apt_components: "/"
+        apt_install_list: ["kubectl"]
+
+  tasks:
+    - name: Test PPA installations
+      ansible.builtin.include_role:
+        name: ansible-role-ubuntu-ppa
+      vars:
+        apt_package: "{{ item }}"
+      loop: "{{ test_ppas }}"
+      loop_control:
+        label: "{{ item.apt_package_name }}"
