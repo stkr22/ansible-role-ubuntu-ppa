@@ -1,7 +1,14 @@
 X-Repolib-Name: {{ apt_package.apt_package_name }}
+Enabled: yes
 Types: deb
-URIs: {{ apt_package.apt_repository_url }}
-Suites: {{ apt_repository_distribution }}
-Components: {{ apt_repository_postfix }}
-Architectures: {{ apt_repository_architecture_key }}
+URIs: {{ apt_package.apt_uris }}
+{% if apt_suites %}
+Suites: {{ apt_suites }}
+{% endif %}
+{% if apt_components %}
+Components: {{ apt_components }}
+{% endif %}
+{% if apt_architectures %}
+Architectures: {{ apt_architectures }}
+{% endif %}
 Signed-By: {{ local_processed_key_path }}
