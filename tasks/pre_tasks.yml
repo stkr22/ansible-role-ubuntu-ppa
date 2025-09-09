@@ -31,10 +31,6 @@
     apt_components: "{{ apt_package.apt_components if 'apt_components' in apt_package else 'main' }}"
     apt_key_temp_path_template: "/tmp/temp-keyring_{{ apt_package.apt_package_name }}_{{ range(1000, 37272) | random }}"
 
-- name: Setting repo reference (for legacy compatibility)
-  ansible.builtin.set_fact:
-    apt_repository_reference: "{{ apt_package.apt_uris }} {{ apt_suites }} {{ apt_components }}"
-
 - name: Create key directory if not exists.
   become: true
   ansible.builtin.file:
