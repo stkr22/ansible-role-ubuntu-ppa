@@ -3,6 +3,7 @@
 local_gpg_keyrings_path: /usr/local/share/keyrings
 apt_package:
   apt_package_name: null
+  launchpad_ppa: null  # e.g., "mozillateam/ppa" for simple Launchpad PPAs
   apt_key_url: null
   apt_key_server_key: null
   apt_uris: null

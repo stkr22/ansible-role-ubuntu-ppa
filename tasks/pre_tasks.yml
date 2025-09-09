@@ -9,10 +9,17 @@
     success_msg: "Required variable {{ req_var }} is defined"
   loop:
     - apt_package.apt_package_name
-    - apt_package.apt_uris
     - apt_package.apt_install_list
   loop_control:
     loop_var: req_var
+
+- name: Verify that either launchpad_ppa or apt_uris is defined
+  ansible.builtin.assert:
+    that:
+      - (apt_package.launchpad_ppa is defined and apt_package.launchpad_ppa | length > 0) or
+        (apt_package.apt_uris is defined and apt_package.apt_uris | length > 0)
+    fail_msg: "Either launchpad_ppa or apt_uris must be defined"
+    success_msg: "Repository configuration is valid"
 
 - name: Setting key names and helper variables
   ansible.builtin.set_fact:

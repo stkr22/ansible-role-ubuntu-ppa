@@ -3,7 +3,18 @@
 - name: Executing defined pre tasks.
   ansible.builtin.import_tasks: pre_tasks.yml
 
-# main tasks
+# Use add-apt-repository for Launchpad PPAs
+- name: "Add Launchpad PPA for {{ apt_package.apt_package_name }}"
+  become: true
+  ansible.builtin.apt_repository:
+    repo: "ppa:{{ apt_package.launchpad_ppa }}"
+    state: present
+    update_cache: true
+  when:
+    - apt_package.launchpad_ppa is defined
+    - apt_package.launchpad_ppa | length > 0
+
+# main tasks for manual repository configuration
 - name: "Get key from ubuntu key server for {{ apt_package.apt_package_name }}"
   ansible.builtin.shell: |
     gpg --no-default-keyring --keyring {{ apt_key_temp_path_template }}.gpg --keyserver keyserver.ubuntu.com --recv-keys {{ apt_package.apt_key_server_key }}
@@ -13,6 +24,7 @@
   when:
     - "'apt_key_server_key' in apt_package"
     - not local_processed_key_check.stat.exists
+    - apt_package.launchpad_ppa is not defined
 
 - name: "Copy key to final location"
   become: true
@@ -24,6 +36,7 @@
   when:
     - "'apt_key_server_key' in apt_package"
     - not local_processed_key_check.stat.exists
+    - apt_package.launchpad_ppa is not defined
 
 - name: "Get raw key from url for {{ apt_package.apt_package_name }}"
   ansible.builtin.get_url:
@@ -33,6 +46,7 @@
   when:
     - not local_processed_key_check.stat.exists
     - "'apt_key_server_key' not in apt_package"
+    - apt_package.launchpad_ppa is not defined
 
 - name: "Dearmor key for {{ apt_package.apt_package_name }}"
   become: true
@@ -43,6 +57,7 @@
   when:
     - not local_processed_key_check.stat.exists
     - "'apt_key_server_key' not in apt_package"
+    - apt_package.launchpad_ppa is not defined
 
 - name: "Add Repository using modern .sources format for {{ apt_package.apt_package_name }}"
   become: true
@@ -51,6 +66,8 @@
     dest: "/etc/apt/sources.list.d/{{ apt_package.apt_package_name }}.sources"
     mode: '0644'
   notify: Update apt cache
+  when:
+    - apt_package.launchpad_ppa is not defined
 
 - name: "Install packages for {{ apt_package.apt_package_name }}"
   become: true
