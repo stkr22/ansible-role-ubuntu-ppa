@@ -6,9 +6,7 @@ apt_package:
   apt_key_url: null
   apt_key_server_key: null
   apt_uris: null
-  apt_components: main
   apt_suites: null
-  apt_architectures: null
   apt_install_list: null
   service_to_autostart_path: null
   service_to_be_started: null

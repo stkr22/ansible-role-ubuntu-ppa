@@ -2,9 +2,7 @@ X-Repolib-Name: {{ apt_package.apt_package_name }}
 Enabled: yes
 Types: deb
 URIs: {{ apt_package.apt_uris }}
-{% if apt_suites %}
 Suites: {{ apt_suites }}
-{% endif %}
 {% if apt_components %}
 Components: {{ apt_components }}
 {% endif %}
