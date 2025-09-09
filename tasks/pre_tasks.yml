@@ -18,11 +18,10 @@
   ansible.builtin.set_fact:
     local_raw_key_path: "/tmp/{{ apt_package.apt_package_name }}_raw.gpg"
     local_processed_key_path: "{{ local_gpg_keyrings_path }}/{{ apt_package.apt_package_name }}.gpg"
-    apt_architectures: "{{ apt_package.apt_architectures |
-      default('amd64' if (ansible_facts['architecture'] == 'x86_64') else 'arm64')
-      if 'apt_architectures' in apt_package else '' }}"
-    apt_suites: "{{ apt_package.apt_suites | default(ansible_facts['lsb'].codename) if 'apt_suites' in apt_package else '' }}"
-    apt_components: "{{ apt_package.apt_components | default('main') if 'apt_components' in apt_package else '' }}"
+    apt_architectures: "{{ apt_package.apt_architectures
+      if 'apt_architectures' in apt_package else ('amd64' if (ansible_facts['architecture'] == 'x86_64') else 'arm64') }}"
+    apt_suites: "{{ apt_package.apt_suites if 'apt_suites' in apt_package else ansible_facts['lsb'].codename }}"
+    apt_components: "{{ apt_package.apt_components if 'apt_components' in apt_package else 'main' }}"
     apt_key_temp_path_template: "/tmp/temp-keyring_{{ apt_package.apt_package_name }}_{{ range(1000, 37272) | random }}"
 
 - name: Setting repo reference (for legacy compatibility)
